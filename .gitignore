@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.local
+.next/
+*.log
+*.tsbuildinfo
+.turbo/
+packages/database/generated/
+
+# Agent tooling (local-only: vendored skills + machine-specific settings)
+.agents/
+.claude/
+skills-lock.json

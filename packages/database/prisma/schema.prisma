@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Ingredient {
+  id        String             @id @default(uuid())
+  name      String             @unique
+  category  IngredientCategory
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  userIngredients   UserIngredient[]
+  recipeIngredients RecipeIngredient[]
+
+  @@map("ingredients")
+}
+
+model UserIngredient {
+  id           String   @id @default(uuid())
+  userId       String
+  ingredientId String
+  createdAt    DateTime @default(now())
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([userId, ingredientId])
+  @@map("user_ingredients")
+}
+
+model Recipe {
+  id   String @id @default(uuid())
+  name String
+
+  instructions String
+  flavorTags   FlavorTag[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  ingredients RecipeIngredient[]
+  ratings     Rating[]
+
+  @@map("recipes")
+}
+
+model RecipeIngredient {
+  id           String @id @default(uuid())
+  recipeId     String
+  ingredientId String
+  amount       String // e.g. "45ml", "2 dashes" — free text, units vary too much for Decimal
+
+  recipe     Recipe     @relation(fields: [recipeId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([recipeId, ingredientId])
+  @@map("recipe_ingredients")
+}
+
+model Rating {
+  id        String   @id @default(uuid())
+  userId    String
+  recipeId  String
+  score     Int // 1-5
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipe Recipe @relation(fields: [recipeId], references: [id])
+
+  @@unique([userId, recipeId])
+  @@map("ratings")
+}
+
+enum IngredientCategory {
+  SPIRIT
+  LIQUEUR
+  MIXER
+  BITTER
+  GARNISH
+  SYRUP
+  OTHER
+}
+
+enum FlavorTag {
+  SOUR
+  SWEET
+  BITTER
+  BOOZY
+  REFRESHING
+  CREAMY
+  SPICY
+  FRUITY
+  HERBAL
+}

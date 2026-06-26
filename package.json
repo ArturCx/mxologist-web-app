@@ -1,0 +1,20 @@
+{
+  "name": "mxologist",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace web",
+    "dev:api": "npm run start:dev --workspace api",
+    "db:generate": "npm run generate --workspace @mxologist/database",
+    "db:migrate": "npm run migrate --workspace @mxologist/database"
+  }
+}
