@@ -1,3 +1,7 @@
+// Must run before anything reads process.env (Clerk secret key, DB url, etc).
+// Nest doesn't load .env on its own and there's no ConfigModule here, so we
+// load apps/api/.env explicitly from the working directory.
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';

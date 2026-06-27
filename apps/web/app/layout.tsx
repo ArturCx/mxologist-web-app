@@ -1,22 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import {
-  ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  Show,
-  UserButton,
-} from "@clerk/nextjs";
-import Link from "next/link";
+import { Poiret_One, Jost } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Display face — logo, headlines, monograms, big numerals.
+const poiretOne = Poiret_One({
+  variable: "--font-poiret-one",
+  weight: "400",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Body/UI face.
+const jost = Jost({
+  variable: "--font-jost",
+  weight: ["300", "400", "500", "600"],
   subsets: ["latin"],
 });
 
@@ -30,29 +27,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // The Mxologist app owns its own chrome (landing + sticky nav), so the
+  // root layout stays minimal — fonts + ClerkProvider only.
   return (
     <ClerkProvider>
       <html
         lang="en"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+        className={`${poiretOne.variable} ${jost.variable} h-full antialiased`}
       >
-        <body className="min-h-full flex flex-col">
-          <header className="flex items-center justify-between h-16 px-6 border-b border-black/10 dark:border-white/10">
-            <Link href="/" className="font-semibold tracking-tight">
-              Mxologist
-            </Link>
-            <nav className="flex items-center gap-3">
-              <Show when="signed-out">
-                <SignInButton mode="modal" />
-                <SignUpButton mode="modal" />
-              </Show>
-              <Show when="signed-in">
-                <UserButton />
-              </Show>
-            </nav>
-          </header>
-          {children}
-        </body>
+        <body className="min-h-full">{children}</body>
       </html>
     </ClerkProvider>
   );

@@ -4,7 +4,9 @@ import { ClerkAuthModule } from './auth/clerk-auth.module';
 import { IngredientsModule } from './ingredients/ingredients.module';
 import { RecipesModule } from './recipes/recipes.module';
 import { RatingsModule } from './ratings/ratings.module';
+import { FavoritesModule } from './favorites/favorites.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -13,7 +15,9 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
     IngredientsModule,
     RecipesModule,
     RatingsModule,
+    FavoritesModule,
     RecommendationsModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

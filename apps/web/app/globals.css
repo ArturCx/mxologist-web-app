@@ -1,26 +1,82 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-poiret: var(--font-poiret-one);
+  --font-jost: var(--font-jost);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
+@keyframes glowPulse {
+  0%,
+  100% {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 0 rgba(217, 147, 58, 0);
+  }
+  50% {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 30px rgba(217, 147, 58, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* App background gradient, driven by the chosen base theme. Declared here so
+   the CSS optimizer (lightningcss) keeps the var() reference instead of
+   inlining the value — the ThemeProvider overrides it on <html> at runtime. */
+:root {
+  --app-bg: radial-gradient(
+    125% 85% at 50% -12%,
+    #16203a 0%,
+    #0c1322 42%,
+    #070b14 100%
+  );
+  /* --nav-bg and --glass-bg are set at runtime by ThemeProvider; their
+     defaults live as var() fallbacks in design.ts (inline styles aren't
+     touched by the CSS optimizer, which would prune unreferenced vars here). */
+}
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--app-bg);
+  /* Pin the gradient to the viewport so it always fills the screen, no matter
+     how tall the page scrolls — otherwise tall views (Settings, What Can I
+     Make) outgrow the gradient and the bottom shows a flat cut-off. */
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: #eef1f7;
+  font-family: var(--font-jost), -apple-system, sans-serif;
+  font-weight: 300;
+}
+
+::-webkit-scrollbar {
+  height: 9px;
+  width: 9px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 165, 92, 0.28);
+  border-radius: 6px;
+}
+::placeholder {
+  color: rgba(150, 164, 190, 0.45);
+}
+input {
+  outline: none;
 }

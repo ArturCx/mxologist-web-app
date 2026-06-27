@@ -48,9 +48,10 @@ export class RecommendationsService {
     const profile = new Map<FlavorTag, number>();
 
     for (const rating of ratings) {
-      // Center score around 0: a 5 contributes +2, a 1 contributes -2,
-      // a 3 contributes 0 — so disliked flavors actively get pushed down
-      const weight = rating.score - 3;
+      // Center the 1–10 canonical score around 0: a 10 contributes +4.5,
+      // a 1 contributes -4.5, ~5.5 is neutral — so disliked flavors get
+      // actively pushed down.
+      const weight = rating.score - 5.5;
 
       for (const tag of rating.recipe.flavorTags) {
         profile.set(tag, (profile.get(tag) ?? 0) + weight);

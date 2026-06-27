@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Ingredient {
@@ -35,15 +36,19 @@ model UserIngredient {
 
 model Recipe {
   id   String @id @default(uuid())
-  name String
+  name String @unique
 
   instructions String
+  imageUrl     String? // source thumbnail URL from the cocktail dataset
+  glassType    String? // e.g. "Cocktail glass", "Highball glass"
+  alcoholic    String? // "Alcoholic" | "Non alcoholic" | "Optional alcohol"
   flavorTags   FlavorTag[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
   ingredients RecipeIngredient[]
   ratings     Rating[]
+  favorites   Favorite[]
 
   @@map("recipes")
 }
@@ -52,7 +57,13 @@ model RecipeIngredient {
   id           String @id @default(uuid())
   recipeId     String
   ingredientId String
-  amount       String // e.g. "45ml", "2 dashes" — free text, units vary too much for Decimal
+  amount       String // original free-text source value (fallback / audit)
+  // Canonical volume in millilitres, parsed from `amount`. Null when the
+  // amount isn't a convertible liquid volume (dashes, parts, "to taste", …).
+  quantityMl   Float?
+  // The non-volumetric remainder shown verbatim when quantityMl is null
+  // (e.g. "2 dashes", "1/2 shot", "to taste").
+  note         String?
 
   recipe     Recipe     @relation(fields: [recipeId], references: [id])
   ingredient Ingredient @relation(fields: [ingredientId], references: [id])
@@ -73,6 +84,54 @@ model Rating {
 
   @@unique([userId, recipeId])
   @@map("ratings")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  recipeId  String
+  createdAt DateTime @default(now())
+
+  recipe Recipe @relation(fields: [recipeId], references: [id])
+
+  @@unique([userId, recipeId])
+  @@map("favorites")
+}
+
+model UserSettings {
+  id              String          @id @default(uuid())
+  userId          String          @unique
+  age             Int?
+  sex             Sex?
+  measurementUnit MeasurementUnit @default(ML)
+  scoreType       ScoreType       @default(FIVE_STARS)
+  language        Language        @default(EN)
+  theme           String          @default("midnight")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@map("user_settings")
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MeasurementUnit {
+  OZ
+  ML
+}
+
+enum ScoreType {
+  FIVE_STARS
+  ONE_TO_TEN
+}
+
+enum Language {
+  EN
+  PT
 }
 
 enum IngredientCategory {
