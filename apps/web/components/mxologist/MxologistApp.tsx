@@ -39,7 +39,13 @@ function Screens() {
       <Backdrop />
       <div style={{ position: "relative", zIndex: 3 }}>
         <Nav />
-        <div style={{ maxWidth: 1160, margin: "0 auto", padding: "40px 26px 90px" }}>
+        <div
+          style={{
+            maxWidth: 1160,
+            margin: "0 auto",
+            padding: "clamp(24px, 5vw, 40px) clamp(14px, 4vw, 26px) 90px",
+          }}
+        >
           {(screen === "bar" || screen === "landing") && <MyBar />}
           {screen === "make" && <WhatCanIMake />}
           {screen === "detail" && <RecipeDetail />}
@@ -56,7 +62,13 @@ export default function MxologistApp() {
     <ThemeProvider>
       <LanguageProvider>
         <MxologistProvider>
-          <div style={{ position: "relative", minHeight: "100vh", overflowX: "hidden" }}>
+          <div
+            style={{
+              position: "relative",
+              minHeight: "100vh",
+              overflowX: "hidden",
+            }}
+          >
             <Screens />
           </div>
         </MxologistProvider>

@@ -44,8 +44,7 @@ export function glassCard(blur: CardBlur = "Medium"): CSSProperties {
     WebkitBackdropFilter: `blur(${b}px) saturate(125%)`,
     border: "1px solid rgba(201,165,92,.26)",
     borderRadius: 6,
-    boxShadow:
-      "0 16px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05)",
+    boxShadow: "0 16px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05)",
   };
 }
 
@@ -75,7 +74,10 @@ export function glowLayer(d: { rgb: string }): CSSProperties {
 }
 
 // Monogram text — size varies by surface (62px tile = 24px, 54px tile = 20px).
-export function monoStyle(d: { accent: string; rgb: string }, size = 24): CSSProperties {
+export function monoStyle(
+  d: { accent: string; rgb: string },
+  size = 24,
+): CSSProperties {
   return {
     position: "relative",
     fontFamily: "var(--font-poiret)",
@@ -113,12 +115,13 @@ export function eyebrow(letterSpacing = ".34em", size = 12): CSSProperties {
   };
 }
 
-// Poiret One screen headline (H2).
+// Poiret One screen headline (H2). Fluidly scales down on small screens so the
+// big titles don't overflow narrow phones — clamps between ~60% and full size.
 export function headline(size = 46): CSSProperties {
   return {
     fontFamily: "var(--font-poiret)",
     fontWeight: 400,
-    fontSize: size,
+    fontSize: `clamp(${Math.round(size * 0.62)}px, 7.5vw, ${size}px)`,
     margin: 0,
     color: tokens.textPrimary,
   };

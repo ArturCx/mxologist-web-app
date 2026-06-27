@@ -5,13 +5,14 @@
   "scripts": {
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
     "import:cocktails": "node --env-file=.env scripts/import-cocktails.mjs"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3"
+    "@prisma/client": "^6.19.3",
+    "prisma": "^6.19.3"
   },
   "devDependencies": {
-    "csv-parse": "^7.0.0",
-    "prisma": "^6.19.3"
+    "csv-parse": "^7.0.0"
   }
 }

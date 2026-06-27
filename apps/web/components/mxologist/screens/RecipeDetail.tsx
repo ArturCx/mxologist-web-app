@@ -16,6 +16,7 @@ import { eyebrow, glassCard, rule, tokens } from "@/lib/mxologist/design";
 import { useMxologist } from "../store";
 import { RecipeDetailSkeleton } from "../Skeleton";
 import DrinkImage from "../DrinkImage";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 // "+ Add" chip for a missing ingredient — hovers to a soft green wash.
 function AddChip({ onClick, label }: { onClick: () => void; label: string }) {
@@ -59,6 +60,7 @@ const dividerHeader = (label: string) => (
 export default function RecipeDetail() {
   const { selectedId, go } = useMxologist();
   const { t, lang } = useT();
+  const isMobile = useIsMobile();
   const api = useApi();
 
   const [recipe, setRecipe] = useState<ApiRecipe | null>(null);
@@ -236,8 +238,8 @@ export default function RecipeDetail() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "340px 1fr",
-          gap: 34,
+          gridTemplateColumns: isMobile ? "1fr" : "340px 1fr",
+          gap: isMobile ? 24 : 34,
           alignItems: "start",
         }}
       >
@@ -268,7 +270,7 @@ export default function RecipeDetail() {
               <div
                 style={{
                   fontFamily: "var(--font-poiret)",
-                  fontSize: 88,
+                  fontSize: "clamp(56px, 16vw, 88px)",
                   color: d.accent,
                   textShadow: `0 0 40px rgba(${d.rgb},.6)`,
                   lineHeight: 1,
@@ -456,10 +458,10 @@ export default function RecipeDetail() {
             style={{
               fontFamily: "var(--font-poiret)",
               fontWeight: 400,
-              fontSize: 54,
+              fontSize: "clamp(34px, 9vw, 54px)",
               margin: "6px 0 0",
               color: tokens.textPrimary,
-              lineHeight: 1,
+              lineHeight: 1.05,
             }}
           >
             {d.name}

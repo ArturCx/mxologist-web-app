@@ -214,6 +214,7 @@ export default function MyBar() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            flexWrap: "wrap",
             gap: 12,
             marginBottom: 12,
           }}
