@@ -5,7 +5,11 @@ import { useApi } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import type { I18nKey } from "@/lib/i18n/en";
 import { recipeToCard, type CardDrink } from "@/lib/mxologist/adapt";
-import type { MatchesResponse, Page, ApiMatch } from "@/lib/mxologist/api-types";
+import type {
+  MatchesResponse,
+  Page,
+  ApiMatch,
+} from "@/lib/mxologist/api-types";
 import {
   diamond,
   eyebrow,
@@ -18,6 +22,8 @@ import {
 } from "@/lib/mxologist/design";
 import { useMxologist, type Filter } from "../store";
 import HoverDiv from "../Hover";
+import { MatchesSkeleton } from "../Skeleton";
+import DrinkImage from "../DrinkImage";
 
 const PAGE_SIZE = 6;
 
@@ -32,6 +38,7 @@ function MonoTile({ d, size = 62 }: { d: CardDrink; size?: number }) {
     <div style={monoTile(size)}>
       <div style={glowLayer(d)} />
       <div style={monoStyle(d, size === 62 ? 24 : 20)}>{d.mono}</div>
+      <DrinkImage src={d.imageUrl} alt={d.name} />
     </div>
   );
 }
@@ -87,7 +94,11 @@ function ReadyCard({
   return (
     <HoverDiv
       onClick={onOpen}
-      base={{ ...cardBase, transition: "transform .25s ease,border-color .25s ease,box-shadow .25s ease" }}
+      base={{
+        ...cardBase,
+        transition:
+          "transform .25s ease,border-color .25s ease,box-shadow .25s ease",
+      }}
       hover={{ ...cardHover, border: "1px solid rgba(227,201,135,.55)" }}
     >
       <CardHead d={d} />
@@ -169,7 +180,11 @@ function AlmostCard({
   return (
     <HoverDiv
       onClick={onOpen}
-      base={{ ...cardBase, transition: "transform .25s ease,border-color .25s ease,box-shadow .25s ease" }}
+      base={{
+        ...cardBase,
+        transition:
+          "transform .25s ease,border-color .25s ease,box-shadow .25s ease",
+      }}
       hover={{ ...cardHover, border: "1px solid rgba(216,146,79,.5)" }}
     >
       <CardHead d={d} />
@@ -332,7 +347,7 @@ const grid = {
 export default function WhatCanIMake() {
   const { filter, setFilter, open, go } = useMxologist();
   const api = useApi();
-  const { t } = useT();
+  const { t, lang } = useT();
 
   const [data, setData] = useState<MatchesResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -367,7 +382,7 @@ export default function WhatCanIMake() {
   const renderCards = useCallback(
     (pageData: Page<ApiMatch>, kind: "ready" | "almost") =>
       pageData.items.map((m) => {
-        const card = recipeToCard(m.recipe);
+        const card = recipeToCard(m.recipe, lang);
         const d = {
           ...card,
           tags: card.tags.map((tag) => t(`flavor.${tag}` as I18nKey)),
@@ -384,7 +399,9 @@ export default function WhatCanIMake() {
           <AlmostCard
             key={d.id}
             d={d}
-            missingNames={m.missingIngredients.map((i) => i.name)}
+            missingNames={m.missingIngredients.map((i) =>
+              lang === "PT" && i.namePt ? i.namePt : i.name,
+            )}
             missLabel={
               m.missingIngredients.length === 1
                 ? t("make.missing_one")
@@ -404,7 +421,10 @@ export default function WhatCanIMake() {
   const showAlmost =
     (filter === "all" || filter === "almost") && (almost?.total ?? 0) > 0;
   const empty =
-    !error && !loading && (ready?.total ?? 0) === 0 && (almost?.total ?? 0) === 0;
+    !error &&
+    !loading &&
+    (ready?.total ?? 0) === 0 &&
+    (almost?.total ?? 0) === 0;
 
   return (
     <div>
@@ -455,11 +475,7 @@ export default function WhatCanIMake() {
         </div>
       </div>
 
-      {loading && !data && (
-        <div style={{ color: "rgba(214,222,238,.6)", marginTop: 36 }}>
-          {t("make.loading")}
-        </div>
-      )}
+      {loading && !data && <MatchesSkeleton />}
 
       {error && (
         <div style={{ color: tokens.almostText, marginTop: 36 }}>
@@ -516,7 +532,10 @@ export default function WhatCanIMake() {
             totalPages={almost.totalPages}
             prevLabel={t("make.prev")}
             nextLabel={t("make.next")}
-            pageText={t("make.pageOf", { p: almost.page, t: almost.totalPages })}
+            pageText={t("make.pageOf", {
+              p: almost.page,
+              t: almost.totalPages,
+            })}
             onPrev={() => setAlmostPage((p) => Math.max(1, p - 1))}
             onNext={() => setAlmostPage((p) => p + 1)}
           />

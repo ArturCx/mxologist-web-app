@@ -26,6 +26,10 @@ export const pt: Dict = {
   "bar.statReady": "{n} ingredientes à mão · {r} drinks prontos",
   "bar.addIngredient": "Adicionar ingrediente",
   "bar.searchPlaceholder": "Busque destilados, mixers, cítricos…",
+  "bar.exploreOptions": "Explorar opções",
+  "bar.hideOptions": "Ocultar opções",
+  "bar.allIngredients": "Todos os ingredientes",
+  "bar.inYourBar": "No seu bar",
   "bar.noMatch": "Nada corresponde a “{q}” no catálogo.",
   "bar.empty":
     "Seu bar está vazio — busque acima pra adicionar sua primeira garrafa.",
@@ -74,7 +78,7 @@ export const pt: Dict = {
   "detail.ingredients": "Ingredientes",
   "detail.method": "Modo de Preparo",
   "detail.add": "Adicionar",
-  "detail.glass": "Taça {glass}",
+  "detail.glass": "{glass}",
   "detail.loading": "Servindo os detalhes…",
   "detail.error": "Não foi possível carregar esta receita: {e}",
 

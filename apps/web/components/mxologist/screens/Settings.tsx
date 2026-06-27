@@ -13,6 +13,7 @@ import { useT, type Lang } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { THEMES, type ThemeDef } from "@/lib/theme/themes";
 import { eyebrow, glassCard, headline, tokens } from "@/lib/mxologist/design";
+import { SettingsSkeleton } from "../Skeleton";
 
 type Sex = "MALE" | "FEMALE" | "OTHER";
 type MeasurementUnit = "OZ" | "ML";
@@ -83,7 +84,11 @@ function PillGroup<T extends string>({
   return (
     <div style={pillWrap}>
       {options.map(([val, label]) => (
-        <div key={val} onClick={() => onChange(val)} style={segStyle(value === val)}>
+        <div
+          key={val}
+          onClick={() => onChange(val)}
+          style={segStyle(value === val)}
+        >
           {label}
         </div>
       ))}
@@ -175,7 +180,9 @@ function ThemeCard({
       >
         {t.label}
         {active && (
-          <span style={{ fontSize: 9, letterSpacing: ".1em", color: "#9fb86a" }}>
+          <span
+            style={{ fontSize: 9, letterSpacing: ".1em", color: "#9fb86a" }}
+          >
             ◆ Active
           </span>
         )}
@@ -401,11 +408,7 @@ export default function Settings() {
   }, []);
 
   if (loading) {
-    return (
-      <div style={{ color: "rgba(214,222,238,.6)" }}>
-        {t("settings.loading")}
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
   if (!settings) {
     return (
@@ -431,7 +434,9 @@ export default function Settings() {
   return (
     <div style={{ maxWidth: 860 }}>
       <div style={eyebrow()}>{t("settings.eyebrow")}</div>
-      <h2 style={{ ...headline(46), margin: "8px 0 0" }}>{t("settings.title")}</h2>
+      <h2 style={{ ...headline(46), margin: "8px 0 0" }}>
+        {t("settings.title")}
+      </h2>
       <p
         style={{
           fontSize: 15,

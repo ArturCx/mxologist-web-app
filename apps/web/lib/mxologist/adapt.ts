@@ -2,6 +2,7 @@
 // components expect. The source dataset has no monogram/colour fields, so we
 // synthesise them deterministically from the recipe's name and flavour tags.
 import type { ApiRecipe } from "./api-types";
+import type { Lang } from "../i18n";
 
 export type CardIngredient = {
   id: string;
@@ -15,6 +16,7 @@ export type CardDrink = {
   id: string;
   name: string;
   mono: string;
+  imageUrl: string | null;
   glass: string;
   base: string;
   accent: string;
@@ -38,6 +40,44 @@ const FLAVOR_COLOR: Record<string, { accent: string; rgb: string }> = {
 };
 const DEFAULT_COLOR = { accent: "#e3c987", rgb: "227,201,135" };
 
+// Glass types are a small, near-enum set of English strings in the dataset.
+// Rather than a DB column we translate them here, keyed by lowercased value
+// (the source mixes "Highball glass" / "Highball Glass"). Unknown values keep
+// their English text.
+const GLASS_PT: Record<string, string> = {
+  "balloon glass": "Taça balão",
+  "beer glass": "Copo de cerveja",
+  "beer mug": "Caneca de cerveja",
+  "beer pilsner": "Copo pilsner",
+  "brandy snifter": "Taça de conhaque",
+  "champagne flute": "Taça flute de champanhe",
+  "cocktail glass": "Taça de coquetel",
+  "coffee mug": "Caneca de café",
+  "collins glass": "Copo Collins",
+  "copper mug": "Caneca de cobre",
+  "cordial glass": "Cálice",
+  "coupe glass": "Taça coupe",
+  "highball glass": "Copo highball",
+  "hurricane glass": "Copo hurricane",
+  "irish coffee cup": "Xícara de Irish coffee",
+  jar: "Pote",
+  "margarita glass": "Taça de margarita",
+  "margarita/coupette glass": "Taça de margarita/coupette",
+  "martini glass": "Taça de martíni",
+  "mason jar": "Pote de vidro",
+  "nick and nora glass": "Taça Nick and Nora",
+  "old-fashioned glass": "Copo old-fashioned",
+  "pint glass": "Copo pint",
+  pitcher: "Jarra",
+  "pousse cafe glass": "Cálice pousse-café",
+  "punch bowl": "Tigela de ponche",
+  "shot glass": "Copo de dose",
+  "whiskey glass": "Copo de uísque",
+  "whiskey sour glass": "Copo de whiskey sour",
+  "white wine glass": "Taça de vinho branco",
+  "wine glass": "Taça de vinho",
+};
+
 // "Old Fashioned" -> "OF"; "Negroni" -> "NE".
 function monogram(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -55,19 +95,40 @@ function toSteps(instructions: string): string[] {
     .filter(Boolean);
 }
 
-export function recipeToCard(r: ApiRecipe): CardDrink {
+// Picks the PT field when the user is in Portuguese, falling back to the
+// English source when no translation exists (brands, untranslated rows).
+const pt = (
+  lang: Lang,
+  en: string,
+  ptVal: string | null | undefined,
+): string => (lang === "PT" && ptVal ? ptVal : en);
+
+export function recipeToCard(r: ApiRecipe, lang: Lang = "EN"): CardDrink {
   const color = FLAVOR_COLOR[r.flavorTags?.[0]] ?? DEFAULT_COLOR;
+  const ingName = (i: ApiRecipe["ingredients"][number]) =>
+    pt(lang, i.ingredient.name, i.ingredient.namePt);
   const baseIng =
-    r.ingredients.find((i) => i.ingredient.category === "SPIRIT")?.ingredient
-      .name ??
-    r.ingredients[0]?.ingredient.name ??
+    (() => {
+      const spirit = r.ingredients.find(
+        (i) => i.ingredient.category === "SPIRIT",
+      );
+      return spirit ? ingName(spirit) : undefined;
+    })() ??
+    (r.ingredients[0] ? ingName(r.ingredients[0]) : undefined) ??
     "Cocktail";
 
+  // Most drink names are proper nouns kept as-is, but some have an accepted
+  // Portuguese name (filled into Recipe.namePt manually); fall back to English.
+  const drinkName = pt(lang, r.name, r.namePt);
   return {
     id: r.id,
-    name: r.name,
-    mono: monogram(r.name),
-    glass: r.glassType ?? "Coupe",
+    name: drinkName,
+    mono: monogram(drinkName),
+    imageUrl: r.imageUrl,
+    glass:
+      lang === "PT" && r.glassType
+        ? (GLASS_PT[r.glassType.toLowerCase()] ?? r.glassType)
+        : (r.glassType ?? "Coupe"),
     base: baseIng,
     accent: color.accent,
     rgb: color.rgb,
@@ -75,11 +136,11 @@ export function recipeToCard(r: ApiRecipe): CardDrink {
     tags: r.flavorTags ?? [],
     ingredients: r.ingredients.map((i) => ({
       id: i.ingredientId,
-      n: i.ingredient.name,
+      n: ingName(i),
       m: i.amount,
       quantityMl: i.quantityMl,
       note: i.note,
     })),
-    steps: toSteps(r.instructions),
+    steps: toSteps(pt(lang, r.instructions, r.instructionsPt)),
   };
 }

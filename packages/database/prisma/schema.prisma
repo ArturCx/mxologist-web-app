@@ -12,6 +12,7 @@ datasource db {
 model Ingredient {
   id        String             @id @default(uuid())
   name      String             @unique
+  namePt    String? // Portuguese translation of the generic name (brands/proper nouns stay null)
   category  IngredientCategory
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
@@ -35,11 +36,13 @@ model UserIngredient {
 }
 
 model Recipe {
-  id   String @id @default(uuid())
-  name String @unique
+  id     String  @id @default(uuid())
+  name   String  @unique
+  namePt String? // Portuguese drink name; null keeps the original (filled in manually)
 
-  instructions String
-  imageUrl     String? // source thumbnail URL from the cocktail dataset
+  instructions   String
+  instructionsPt String? // Portuguese translation of the instructions
+  imageUrl       String? // source thumbnail URL from the cocktail dataset
   glassType    String? // e.g. "Cocktail glass", "Highball glass"
   alcoholic    String? // "Alcoholic" | "Non alcoholic" | "Optional alcohol"
   flavorTags   FlavorTag[]

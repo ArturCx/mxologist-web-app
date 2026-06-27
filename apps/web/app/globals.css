@@ -16,6 +16,29 @@
   }
 }
 
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Shimmering placeholder used by <Skeleton>. Declared as a real CSS rule (not
+   only inline styles) so the CSS optimizer keeps the @keyframes above — an
+   inline `animation:` alone gets the keyframe tree-shaken away as "unused". */
+.mx-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(201, 165, 92, 0.06) 25%,
+    rgba(201, 165, 92, 0.18) 50%,
+    rgba(201, 165, 92, 0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
 @keyframes glowPulse {
   0%,
   100% {

@@ -14,6 +14,8 @@ import type {
 } from "@/lib/mxologist/api-types";
 import { eyebrow, glassCard, rule, tokens } from "@/lib/mxologist/design";
 import { useMxologist } from "../store";
+import { RecipeDetailSkeleton } from "../Skeleton";
+import DrinkImage from "../DrinkImage";
 
 // "+ Add" chip for a missing ingredient — hovers to a soft green wash.
 function AddChip({ onClick, label }: { onClick: () => void; label: string }) {
@@ -56,11 +58,12 @@ const dividerHeader = (label: string) => (
 
 export default function RecipeDetail() {
   const { selectedId, go } = useMxologist();
-  const { t } = useT();
+  const { t, lang } = useT();
   const api = useApi();
 
   const [recipe, setRecipe] = useState<ApiRecipe | null>(null);
-  const [ownedNames, setOwnedNames] = useState<Set<string>>(new Set());
+  // Inventory match keyed by ingredientId (not name) so translated names don't break it.
+  const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [ratingScore, setRatingScore] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [hoverStar, setHoverStar] = useState(0);
@@ -87,7 +90,7 @@ export default function RecipeDetail() {
       .then(([r, inv, ratings, favorites, settings]) => {
         if (cancelled) return;
         setRecipe(r);
-        setOwnedNames(new Set(inv.map((i) => i.ingredient.name.toLowerCase())));
+        setOwnedIds(new Set(inv.map((i) => i.ingredientId)));
         setRatingScore(
           ratings.find((rt) => rt.recipeId === selectedId)?.score ?? 0,
         );
@@ -109,8 +112,8 @@ export default function RecipeDetail() {
   }, [api, selectedId]);
 
   const has = useCallback(
-    (name: string) => ownedNames.has(name.toLowerCase()),
-    [ownedNames],
+    (ingredientId: string) => ownedIds.has(ingredientId),
+    [ownedIds],
   );
 
   const submitRating = useCallback(
@@ -152,18 +155,18 @@ export default function RecipeDetail() {
   }, [api, selectedId, isFavorite]);
 
   const addIngredient = useCallback(
-    async (ingredientId: string, name: string) => {
+    async (ingredientId: string) => {
       // Optimistic — reflect it immediately, roll back if the call fails.
-      setOwnedNames((prev) => new Set(prev).add(name.toLowerCase()));
+      setOwnedIds((prev) => new Set(prev).add(ingredientId));
       try {
         await api("/ingredients/my-inventory", {
           method: "POST",
           body: JSON.stringify({ ingredientId }),
         });
       } catch {
-        setOwnedNames((prev) => {
+        setOwnedIds((prev) => {
           const next = new Set(prev);
-          next.delete(name.toLowerCase());
+          next.delete(ingredientId);
           return next;
         });
       }
@@ -174,9 +177,7 @@ export default function RecipeDetail() {
   if (!selectedId) return null;
 
   if (loading && !recipe) {
-    return (
-      <div style={{ color: "rgba(214,222,238,.6)" }}>{t("detail.loading")}</div>
-    );
+    return <RecipeDetailSkeleton />;
   }
 
   if (error && !recipe) {
@@ -206,7 +207,7 @@ export default function RecipeDetail() {
 
   if (!recipe) return null;
 
-  const d = recipeToCard(recipe);
+  const d = recipeToCard(recipe, lang);
   // Rating display is in the user's scale; storage stays canonical 1–10.
   const maxUnits = scoreType === "FIVE_STARS" ? 5 : 10;
   const displayValue =
@@ -288,6 +289,11 @@ export default function RecipeDetail() {
                 {t("detail.photo")}
               </div>
             </div>
+            <DrinkImage
+              src={d.imageUrl}
+              alt={d.name}
+              sizes="(max-width: 720px) 90vw, 340px"
+            />
           </div>
 
           <div style={{ ...glassCard(), padding: 24, marginTop: 18 }}>
@@ -339,7 +345,9 @@ export default function RecipeDetail() {
                   inputMode="numeric"
                   value={ratingScore > 0 ? String(ratingScore) : ""}
                   onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "").slice(0, 2);
+                    const digits = e.target.value
+                      .replace(/\D/g, "")
+                      .slice(0, 2);
                     let v = digits === "" ? 0 : Number(digits);
                     if (v > 10) v = 10;
                     setRatingScore(v); // optimistic; persisted on blur
@@ -498,7 +506,7 @@ export default function RecipeDetail() {
           {dividerHeader(t("detail.ingredients"))}
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {d.ingredients.map((i) => {
-              const have = has(i.n);
+              const have = has(i.id);
               return (
                 <div
                   key={i.id}
@@ -534,9 +542,7 @@ export default function RecipeDetail() {
                     <span
                       style={{
                         fontSize: 15,
-                        color: have
-                          ? tokens.textBody
-                          : "rgba(214,222,238,.55)",
+                        color: have ? tokens.textBody : "rgba(214,222,238,.55)",
                       }}
                     >
                       {i.n}
@@ -552,13 +558,13 @@ export default function RecipeDetail() {
                         fontVariantNumeric: "tabular-nums",
                       }}
                     >
-                      {formatMeasure(i.quantityMl, i.note, i.m, unit)}
+                      {formatMeasure(i.quantityMl, i.note, i.m, unit, lang)}
                     </span>
                     {!have && (
                       <AddChip
-                      onClick={() => addIngredient(i.id, i.n)}
-                      label={t("detail.add")}
-                    />
+                        onClick={() => addIngredient(i.id)}
+                        label={t("detail.add")}
+                      />
                     )}
                   </div>
                 </div>

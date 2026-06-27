@@ -24,6 +24,8 @@ import {
 } from "@/lib/mxologist/design";
 import { useMxologist } from "../store";
 import HoverDiv from "../Hover";
+import { RecommendedSkeleton } from "../Skeleton";
+import DrinkImage from "../DrinkImage";
 
 type Pick = {
   d: CardDrink;
@@ -37,7 +39,7 @@ type TasteBar = { label: string; raw: number; pct: number };
 export default function Recommended() {
   const { open } = useMxologist();
   const api = useApi();
-  const { t } = useT();
+  const { t, lang } = useT();
 
   const [recs, setRecs] = useState<ApiRecommendation[]>([]);
   const [ratings, setRatings] = useState<ApiRating[]>([]);
@@ -106,7 +108,7 @@ export default function Recommended() {
     const missing = recipe.ingredients.filter(
       (ri) => !ownedIds.has(ri.ingredientId),
     ).length;
-    const card = recipeToCard(recipe);
+    const card = recipeToCard(recipe, lang);
     return {
       d: {
         ...card,
@@ -130,7 +132,7 @@ export default function Recommended() {
     const missing = recipe.ingredients.filter(
       (ri) => !ownedIds.has(ri.ingredientId),
     ).length;
-    const card = recipeToCard(recipe);
+    const card = recipeToCard(recipe, lang);
     return {
       d: {
         ...card,
@@ -176,11 +178,7 @@ export default function Recommended() {
         </div>
       )}
 
-      {loading && (
-        <div style={{ color: "rgba(214,222,238,.6)", marginTop: 28 }}>
-          {t("rec.loading")}
-        </div>
-      )}
+      {loading && <RecommendedSkeleton />}
 
       {!loading && !error && (
         <>
@@ -190,7 +188,9 @@ export default function Recommended() {
               {t("rec.tasteProfile")}
             </div>
             {tasteBars.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 13 }}
+              >
                 {tasteBars.map((b) => (
                   <div
                     key={b.label}
@@ -386,6 +386,7 @@ function RecCard({
         <div style={monoTile(54)}>
           <div style={glowLayer(d)} />
           <div style={monoStyle(d, 20)}>{d.mono}</div>
+          <DrinkImage src={d.imageUrl} alt={d.name} />
         </div>
         {matchPct !== undefined && (
           <div style={{ textAlign: "right" }}>

@@ -19,6 +19,7 @@ import {
 } from "@/lib/mxologist/design";
 import { useMxologist } from "../store";
 import HoverDiv from "../Hover";
+import Skeleton, { ChipsSkeleton } from "../Skeleton";
 
 // Display order for the IngredientCategory enum; labels come from i18n.
 const CAT_ORDER = [
@@ -54,8 +55,11 @@ function RemoveX({ onClick }: { onClick: () => void }) {
 
 export default function MyBar() {
   const { search, setSearch, go } = useMxologist();
-  const { t } = useT();
+  const { t, lang } = useT();
   const catLabel = (cat: string) => t(`cat.${cat}` as I18nKey);
+  // Ingredient display name in the active language (falls back to EN for brands).
+  const iname = (i: { name: string; namePt: string | null }) =>
+    lang === "PT" && i.namePt ? i.namePt : i.name;
   const api = useApi();
 
   const [catalog, setCatalog] = useState<ApiIngredient[]>([]);
@@ -63,6 +67,9 @@ export default function MyBar() {
   const [readyCount, setReadyCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // "Explore options" panel — rendered from the already-loaded catalog, so
+  // toggling it open never triggers a fetch.
+  const [exploreOpen, setExploreOpen] = useState(false);
 
   // Initial load: catalog + the user's inventory + how many drinks are ready.
   useEffect(() => {
@@ -104,10 +111,13 @@ export default function MyBar() {
     async (ing: ApiIngredient) => {
       // Optimistic-ish: append, then reconcile the ready stat.
       try {
-        const created = await api<ApiUserIngredient>("/ingredients/my-inventory", {
-          method: "POST",
-          body: JSON.stringify({ ingredientId: ing.id }),
-        });
+        const created = await api<ApiUserIngredient>(
+          "/ingredients/my-inventory",
+          {
+            method: "POST",
+            body: JSON.stringify({ ingredientId: ing.id }),
+          },
+        );
         setOwned((prev) =>
           prev.some((o) => o.ingredientId === created.ingredientId)
             ? prev
@@ -141,7 +151,12 @@ export default function MyBar() {
   const q = search.trim().toLowerCase();
   const addResults = q
     ? catalog
-        .filter((c) => !ownedIds.has(c.id) && c.name.toLowerCase().includes(q))
+        .filter(
+          (c) =>
+            !ownedIds.has(c.id) &&
+            (c.name.toLowerCase().includes(q) ||
+              (c.namePt?.toLowerCase().includes(q) ?? false)),
+        )
         .slice(0, 24)
     : [];
   const noResults = q.length > 0 && addResults.length === 0;
@@ -150,7 +165,16 @@ export default function MyBar() {
     name: cat,
     items: owned
       .filter((o) => o.ingredient.category === cat)
-      .sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name)),
+      .sort((a, b) => iname(a.ingredient).localeCompare(iname(b.ingredient))),
+  })).filter((g) => g.items.length > 0);
+
+  // Full catalog grouped by category for the "Explore options" panel. Built
+  // from the catalog already in state — no extra request when it opens.
+  const catalogGroups = CAT_ORDER.map((cat) => ({
+    name: cat,
+    items: catalog
+      .filter((c) => c.category === cat)
+      .sort((a, b) => iname(a).localeCompare(iname(b))),
   })).filter((g) => g.items.length > 0);
 
   const barStat =
@@ -173,7 +197,7 @@ export default function MyBar() {
       >
         <h2 style={headline(46)}>{t("bar.title")}</h2>
         <div style={{ fontSize: 14, color: "rgba(214,222,238,.7)" }}>
-          {loading ? t("bar.loading") : barStat}
+          {loading ? <Skeleton width={190} height={14} /> : barStat}
         </div>
       </div>
 
@@ -185,8 +209,54 @@ export default function MyBar() {
 
       {/* Add-ingredient panel */}
       <div style={{ ...glassCard(), padding: 24, marginTop: 26 }}>
-        <div style={{ ...eyebrow(".24em", 11), marginBottom: 12 }}>
-          {t("bar.addIngredient")}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 12,
+          }}
+        >
+          <div style={{ ...eyebrow(".24em", 11), lineHeight: 1 }}>
+            {t("bar.addIngredient")}
+          </div>
+          <HoverDiv
+            onClick={() => setExploreOpen((v) => !v)}
+            base={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "7px 14px",
+              border: "1px solid rgba(201,165,92,.4)",
+              borderRadius: 30,
+              cursor: "pointer",
+              fontSize: 11,
+              lineHeight: 1,
+              letterSpacing: ".14em",
+              textTransform: "uppercase",
+              color: "rgba(227,201,135,.95)",
+              background: exploreOpen
+                ? "rgba(201,165,92,.16)"
+                : "rgba(201,165,92,.05)",
+              whiteSpace: "nowrap",
+            }}
+            hover={{
+              border: "1px solid #e3c987",
+              background: "rgba(201,165,92,.16)",
+            }}
+          >
+            {exploreOpen ? t("bar.hideOptions") : t("bar.exploreOptions")}
+            <span
+              style={{
+                fontSize: 9,
+                transform: exploreOpen ? "rotate(180deg)" : "none",
+                transition: "transform .2s",
+              }}
+            >
+              ▾
+            </span>
+          </HoverDiv>
         </div>
         <div
           style={{
@@ -250,7 +320,7 @@ export default function MyBar() {
                 <span style={{ color: tokens.readyGreen, fontWeight: 500 }}>
                   ＋
                 </span>
-                {r.name}
+                {iname(r)}
                 <span
                   style={{
                     fontSize: 10,
@@ -279,6 +349,114 @@ export default function MyBar() {
         )}
       </div>
 
+      {/* Explore-options panel — every catalog ingredient, grouped by category.
+          Pre-rendered from the catalog already in state (no fetch on open) and
+          kept mounted so it can animate open/closed (grid rows 0fr→1fr, which
+          smoothly tweens to the content's auto height) plus a fade + slide. */}
+      <div
+        aria-hidden={!exploreOpen}
+        style={{
+          display: "grid",
+          gridTemplateRows: exploreOpen ? "1fr" : "0fr",
+          transition: "grid-template-rows .35s ease",
+        }}
+      >
+        <div style={{ overflow: "hidden", minHeight: 0 }}>
+          <div
+            style={{
+              ...glassCard(),
+              padding: 24,
+              marginTop: 16,
+              opacity: exploreOpen ? 1 : 0,
+              transform: exploreOpen ? "translateY(0)" : "translateY(-8px)",
+              transition: "opacity .3s ease, transform .35s ease",
+            }}
+          >
+            <div style={{ ...eyebrow(".24em", 11), marginBottom: 16 }}>
+              {t("bar.allIngredients")} · {catalog.length}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {catalogGroups.map((g) => (
+                <div key={g.name}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <div
+                      style={{ ...eyebrow(".22em", 11), whiteSpace: "nowrap" }}
+                    >
+                      {catLabel(g.name)}
+                    </div>
+                    <div style={rule()} />
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 9 }}>
+                    {g.items.map((c) => {
+                      const have = ownedIds.has(c.id);
+                      return have ? (
+                        <div
+                          key={c.id}
+                          title={t("bar.inYourBar")}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 14px",
+                            border: "1px solid rgba(122,198,194,.3)",
+                            borderRadius: 30,
+                            fontSize: 13,
+                            color: "rgba(214,222,238,.55)",
+                            background: "rgba(122,198,194,.06)",
+                            cursor: "default",
+                          }}
+                        >
+                          <span style={{ color: tokens.readyGreen }}>✓</span>
+                          {iname(c)}
+                        </div>
+                      ) : (
+                        <HoverDiv
+                          key={c.id}
+                          onClick={() => addIngredient(c)}
+                          base={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 14px",
+                            border: "1px solid rgba(201,165,92,.3)",
+                            borderRadius: 30,
+                            cursor: "pointer",
+                            background: "rgba(201,165,92,.05)",
+                            fontSize: 13,
+                            color: tokens.textBody,
+                          }}
+                          hover={{
+                            border: "1px solid #e3c987",
+                            background: "rgba(201,165,92,.14)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              color: tokens.readyGreen,
+                              fontWeight: 500,
+                            }}
+                          >
+                            ＋
+                          </span>
+                          {iname(c)}
+                        </HoverDiv>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Inventory groups */}
       <div
         style={{
@@ -293,6 +471,13 @@ export default function MyBar() {
             {t("bar.empty")}
           </div>
         )}
+        {loading &&
+          [0, 1].map((s) => (
+            <div key={s}>
+              <Skeleton width={120} height={12} style={{ marginBottom: 14 }} />
+              <ChipsSkeleton count={s === 0 ? 7 : 5} />
+            </div>
+          ))}
         {inventoryGroups.map((g) => (
           <div key={g.name}>
             <div
@@ -325,7 +510,7 @@ export default function MyBar() {
                     color: tokens.textBody,
                   }}
                 >
-                  {it.ingredient.name}
+                  {iname(it.ingredient)}
                   <RemoveX onClick={() => removeIngredient(it.ingredientId)} />
                 </div>
               ))}

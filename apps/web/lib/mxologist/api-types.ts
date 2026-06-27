@@ -4,6 +4,7 @@
 export type ApiIngredient = {
   id: string;
   name: string;
+  namePt: string | null; // PT translation; null for brands/proper nouns (falls back to name)
   category: string; // IngredientCategory enum
 };
 
@@ -24,7 +25,9 @@ export type ApiRecipeIngredient = {
 export type ApiRecipe = {
   id: string;
   name: string;
+  namePt: string | null; // PT drink name; null falls back to name
   instructions: string;
+  instructionsPt: string | null; // PT translation (falls back to instructions)
   imageUrl: string | null;
   glassType: string | null;
   alcoholic: string | null;
