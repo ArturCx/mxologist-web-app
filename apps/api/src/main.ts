@@ -11,8 +11,19 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  // Allowed front-end origins. WEB_APP_URL may be a single origin or a
+  // comma-separated list, e.g. "https://mxologist.com,https://mxologist.vercel.app".
+  const allowedOrigins = (process.env.WEB_APP_URL ?? 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.WEB_APP_URL ?? 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // No Origin header = same-origin / curl / server-to-server — allow it.
+      // Otherwise only echo back origins on the allowlist.
+      callback(null, !origin || allowedOrigins.includes(origin));
+    },
     credentials: true,
   });
 
