@@ -7,6 +7,10 @@
 </p>
 
 <p align="center">
+  <a href="https://mxologist-web.vercel.app/"><strong>🍸 Live app → mxologist-web.vercel.app</strong></a>
+</p>
+
+<p align="center">
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs&logoColor=white" />
   <img alt="React" src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white" />
   <img alt="NestJS" src="https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white" />
