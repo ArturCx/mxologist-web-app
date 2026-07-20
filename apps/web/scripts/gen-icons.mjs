@@ -5,21 +5,24 @@
 //   - apple-icon.png must be RGB (no alpha). iOS composites transparency over
 //     black, which would swallow the dark engraving.
 //   - no pre-rounded corners: iOS applies the squircle mask itself.
-//   - ~12% inner padding so Android doesn't crop the art.
+//   - inner padding so Android doesn't crop the art.
 import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
 
 const SRC = "public/brand/mxologist-symbol.png";
-const BG = "#0c1322"; // midnight — same as the manifest background/theme color
+const BG = { r: 0x0c, g: 0x13, b: 0x22 }; // midnight — matches the manifest colors
 const OUT = "public/icons";
-const INSET = 0.8; // art occupies 80% of the canvas
+const INSET = 0.86; // art occupies 86% of the canvas (~7% margin per side)
 
 await mkdir(OUT, { recursive: true });
 
-const render = async (size) => {
+// The symbol, centered on a transparent square canvas of `size`.
+const symbolOn = async (size) => {
   const art = Math.round(size * INSET);
   const pad = Math.round((size - art) / 2);
   const symbol = await sharp(SRC, { density: 384 })
+    // Trim the source's own transparent margin so INSET is the real margin.
+    .trim()
     .resize(art, art, {
       fit: "contain",
       background: { r: 0, g: 0, b: 0, alpha: 0 },
@@ -28,24 +31,36 @@ const render = async (size) => {
     .png()
     .toBuffer();
 
-  return sharp(symbol).extend({
-    top: pad,
-    bottom: size - art - pad,
-    left: pad,
-    right: size - art - pad,
-    background: { r: 0, g: 0, b: 0, alpha: 0 },
-  });
+  return sharp(symbol)
+    .extend({
+      top: pad,
+      bottom: size - art - pad,
+      left: pad,
+      right: size - art - pad,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .png()
+    .toBuffer();
 };
 
 // Transparent set: favicon + Android home screen / splash.
-await (await render(512)).png().toFile(`${OUT}/icon.png`);
-await (await render(512)).png().toFile(`${OUT}/icon-512.png`);
-await (await render(192)).png().toFile(`${OUT}/icon-192.png`);
+for (const [name, size] of [
+  ["icon.png", 512],
+  ["icon-512.png", 512],
+  ["icon-192.png", 192],
+]) {
+  await sharp(await symbolOn(size)).toFile(`${OUT}/${name}`);
+}
 
-// iOS: solid brand background baked in, alpha channel removed.
-await (await render(180))
-  .flatten({ background: BG })
-  .removeAlpha()
+// iOS: composite onto an opaque brand-colored canvas. Note this does NOT use
+// .flatten() on the padded symbol — sharp doesn't apply flatten after extend,
+// so the extended margin would come out black and the icon would show a black
+// frame on the home screen.
+await sharp({
+  create: { width: 180, height: 180, channels: 3, background: BG },
+})
+  .composite([{ input: await symbolOn(180) }])
+  .removeAlpha() // compositing reintroduces the alpha channel
   .png({ palette: false })
   .toFile(`${OUT}/apple-icon.png`);
 
