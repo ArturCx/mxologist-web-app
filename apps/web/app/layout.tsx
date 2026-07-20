@@ -20,6 +20,13 @@ const jost = Jost({
 export const metadata: Metadata = {
   title: "Mxologist",
   description: "Find cocktails you can make with the bottles you already have.",
+  // Served from public/icons (not the app/icon.png convention, which would
+  // take precedence over this): transparent favicon + apple-touch icon with
+  // the brand background baked in, since iOS composites alpha over black.
+  icons: {
+    icon: "/icons/icon.png",
+    apple: "/icons/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
