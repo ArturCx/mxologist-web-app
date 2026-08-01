@@ -19,7 +19,7 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 ```
 
-In production, `NEXT_PUBLIC_API_URL` points to the API on Railway (`https://…/api`).
+In production, `NEXT_PUBLIC_API_URL` points to the API on Vercel: `https://mxologist-api.vercel.app/api`. Note that the value already includes the `/api` global prefix.
 
 ## Deploy
 

@@ -29,4 +29,11 @@ PORT=4000
 
 ## Deploy
 
-**Railway** — configuration lives in **[`railway.json`](../../railway.json)** at the root: the build runs `prisma generate` + `nest build`; the start runs `prisma migrate deploy` + `node dist/main`.
+**Vercel** (project `mxologist-api`), with **Root Directory = `apps/api`**. The NestJS preset turns `src/main.ts` into a single Vercel Function, so there is no `nest build` step and no start command in production.
+
+Configuration lives in **[`vercel.json`](./vercel.json)**. Its `buildCommand` runs from the repo root and does the two things the serverless runtime can't:
+
+- `prisma generate` — on every build, because `packages/database/generated/` is gitignored.
+- `prisma migrate deploy` — **only when `VERCEL_ENV=production`**. Preview deployments share the single Neon database, so they must never migrate it.
+
+`PORT` is injected by Vercel; don't set it as a project environment variable. The other variables (`DATABASE_URL`, `DIRECT_URL`, `CLERK_SECRET_KEY`, `WEB_APP_URL`) are configured on the Vercel project.
