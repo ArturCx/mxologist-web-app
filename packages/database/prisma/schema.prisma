@@ -1,6 +1,9 @@
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/client"
+  // "native" keeps local dev working; "rhel-openssl-3.0.x" is the engine the
+  // Vercel Function runtime (Amazon Linux 2023) needs at runtime.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {

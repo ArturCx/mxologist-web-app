@@ -61,7 +61,7 @@ Other product details: **authentication** via Clerk, **EN/PT i18n** (both UI _an
 | **Database / ORM** | **PostgreSQL** (Neon) · **Prisma 6** (`directUrl` for migrations + pooled connection at runtime) |
 | **Language** | **TypeScript** end to end |
 | **Data** | [TheCocktailDB](https://www.thecocktaildb.com/) dataset (~425 recipes, ~293 ingredients, hosted photos) |
-| **Deploy** | **Vercel** (web) · **Railway** (API) · **Neon** (Postgres) |
+| **Deploy** | **Vercel** (web + API as a Function) · **Neon** (Postgres) |
 
 ---
 
@@ -100,9 +100,13 @@ npm run dev:web      # Next.js → http://localhost:3000
 
 | Component | Platform | Notes |
 |---|---|---|
-| **Frontend** | **Vercel** | Root Directory = `apps/web` (the Next.js preset is auto-detected). |
-| **Backend** | **Railway** | Uses `railway.json` at the root: build runs `prisma generate` + `nest build`; start runs `prisma migrate deploy` + `node dist/main`. |
-| **Database** | **Neon** | Managed Postgres. |
+| **Frontend** | **Vercel** | Project `mxologist-web`, Root Directory = `apps/web` (the Next.js preset is auto-detected). |
+| **Backend** | **Vercel** | Project `mxologist-api`, Root Directory = `apps/api`. The NestJS preset turns `src/main.ts` into a single Vercel Function — no `nest build` step is needed. `apps/api/vercel.json` runs `prisma generate` on every build and `prisma migrate deploy` **only when `VERCEL_ENV=production`**, so preview deploys never migrate the live database. |
+| **Database** | **Neon** | Managed Postgres. The pooled `DATABASE_URL` is used at runtime (required for serverless); `DIRECT_URL` is used for migrations. |
+
+**Environment variables on `mxologist-api`:** `DATABASE_URL`, `DIRECT_URL`, `CLERK_SECRET_KEY`, `WEB_APP_URL` (comma-separated CORS allowlist). `PORT` is injected by Vercel — do not set it.
+
+**Environment variables on `mxologist-web`:** `NEXT_PUBLIC_API_URL` (points at `https://mxologist-api.vercel.app/api`, already including the `/api` global prefix), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`.
 
 ---
 

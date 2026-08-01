@@ -17,3 +17,6 @@ skills-lock.json
 # source-data JSON. Not used by the deployed app (which relies on the Prisma
 # client + migrations); kept local-only so the data isn't exposed on GitHub.
 packages/database/scripts/
+
+# Vercel CLI local link + pulled env
+.vercel/
