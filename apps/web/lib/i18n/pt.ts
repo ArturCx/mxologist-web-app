@@ -106,6 +106,17 @@ export const pt: Dict = {
   "rec.away_other": "faltam {n} ingredientes",
   "rec.stretch": "Uma aposta ousada",
 
+  // All drinks (banner + modal on What Can I Make)
+  "all.banner": "Explore o cardápio completo",
+  "all.seeAll": "Ver tudo",
+  "all.eyebrow": "O Cardápio Completo",
+  "all.count": "{n} drinks",
+  "all.title": "Todos os Drinks",
+  "all.search": "Busque um drink…",
+  "all.empty": "Nenhum drink encontrado.",
+  "all.close": "Fechar",
+  "all.error": "Não foi possível carregar os drinks: {e}",
+
   // Flavor tags
   "flavor.SOUR": "Azedo",
   "flavor.SWEET": "Doce",

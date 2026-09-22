@@ -24,6 +24,7 @@ import { useMxologist, type Filter } from "../store";
 import HoverDiv from "../Hover";
 import { MatchesSkeleton } from "../Skeleton";
 import DrinkImage from "../DrinkImage";
+import { AllDrinksBanner, AllDrinksModal } from "../AllDrinks";
 
 const PAGE_SIZE = 6;
 
@@ -354,6 +355,8 @@ export default function WhatCanIMake() {
   const [error, setError] = useState<string | null>(null);
   const [readyPage, setReadyPage] = useState(1);
   const [almostPage, setAlmostPage] = useState(1);
+  const [showAll, setShowAll] = useState(false);
+  const closeAll = useCallback(() => setShowAll(false), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -541,6 +544,9 @@ export default function WhatCanIMake() {
           />
         </>
       )}
+
+      <AllDrinksBanner onOpen={() => setShowAll(true)} />
+      {showAll && <AllDrinksModal onClose={closeAll} onSelect={open} />}
     </div>
   );
 }

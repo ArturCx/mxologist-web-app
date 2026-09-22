@@ -105,6 +105,17 @@ export const en = {
   "rec.away_other": "{n} ingredients away",
   "rec.stretch": "A stretch pick",
 
+  // All drinks (banner + modal on What Can I Make)
+  "all.banner": "Browse the full menu",
+  "all.seeAll": "See all",
+  "all.eyebrow": "The Full Menu",
+  "all.count": "{n} drinks",
+  "all.title": "All Drinks",
+  "all.search": "Search drinks…",
+  "all.empty": "No drinks match your search.",
+  "all.close": "Close",
+  "all.error": "Couldn't load the drinks: {e}",
+
   // Flavor tags
   "flavor.SOUR": "Sour",
   "flavor.SWEET": "Sweet",
