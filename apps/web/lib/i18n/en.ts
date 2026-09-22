@@ -40,6 +40,7 @@ export const en = {
   // Ingredient categories
   "cat.SPIRIT": "Spirits",
   "cat.LIQUEUR": "Liqueurs",
+  "cat.FERMENTED": "Fermented",
   "cat.MIXER": "Mixers",
   "cat.SYRUP": "Syrups",
   "cat.BITTER": "Bitters",

@@ -25,6 +25,7 @@ import Skeleton, { ChipsSkeleton } from "../Skeleton";
 const CAT_ORDER = [
   "SPIRIT",
   "LIQUEUR",
+  "FERMENTED",
   "MIXER",
   "SYRUP",
   "BITTER",

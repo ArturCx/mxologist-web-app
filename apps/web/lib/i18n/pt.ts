@@ -40,6 +40,7 @@ export const pt: Dict = {
   // Ingredient categories
   "cat.SPIRIT": "Destilados",
   "cat.LIQUEUR": "Licores",
+  "cat.FERMENTED": "Fermentados",
   "cat.MIXER": "Mixers",
   "cat.SYRUP": "Xaropes",
   "cat.BITTER": "Bitters",

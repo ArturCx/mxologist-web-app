@@ -200,6 +200,7 @@ enum Language {
 enum IngredientCategory {
   SPIRIT
   LIQUEUR
+  FERMENTED // wine, beer, cider, port, sherry, champagne
   MIXER
   BITTER
   GARNISH
