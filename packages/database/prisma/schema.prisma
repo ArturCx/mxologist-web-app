@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/client"
+  provider      = "prisma-client-js"
+  output        = "../generated/client"
   // "native" keeps local dev working; "rhel-openssl-3.0.x" is the engine the
   // Vercel Function runtime (Amazon Linux 2023) needs at runtime.
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
@@ -46,21 +46,22 @@ model Recipe {
   instructions   String
   instructionsPt String? // Portuguese translation of the instructions
   imageUrl       String? // source thumbnail URL from the cocktail dataset
-  glassType    String? // e.g. "Cocktail glass", "Highball glass"
-  alcoholic    String? // "Alcoholic" | "Non alcoholic" | "Optional alcohol"
-  flavorTags   FlavorTag[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  glassType      String? // e.g. "Cocktail glass", "Highball glass"
+  alcoholic      String? // "Alcoholic" | "Non alcoholic" | "Optional alcohol"
+  flavorTags     FlavorTag[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
-  ingredients RecipeIngredient[]
-  ratings     Rating[]
-  favorites   Favorite[]
+  ingredients          RecipeIngredient[]
+  ratings              Rating[]
+  favorites            Favorite[]
+  recommendationEvents RecommendationEvent[]
 
   @@map("recipes")
 }
 
 model RecipeIngredient {
-  id           String @id @default(uuid())
+  id           String  @id @default(uuid())
   recipeId     String
   ingredientId String
   amount       String // original free-text source value (fallback / audit)
@@ -117,6 +118,62 @@ model UserSettings {
   updatedAt       DateTime        @updatedAt
 
   @@map("user_settings")
+}
+
+// A trained snapshot of the neural recommender (TensorFlow.js). The Vercel
+// Function filesystem is ephemeral, so the whole model lives here: topology +
+// weight specs as JSON, the weight values as raw bytes (a few KB).
+model ModelVersion {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // Only one row is active at a time — the one /recommendations serves from.
+  active    Boolean @default(false)
+  // True when trained on generated users (pipeline smoke tests), never real data.
+  synthetic Boolean @default(false)
+
+  ratingsCount Int
+  usersCount   Int
+  // Training/validation numbers: loss, valMae, meanBaselineMae, epochs, …
+  metrics      Json
+
+  // Feature vocabulary the weights were trained against (ingredient ids,
+  // glass types, …). Inference must encode inputs with this exact ordering.
+  vocab       Json
+  topology    Json
+  weightSpecs Json
+  weights     Bytes
+
+  events RecommendationEvent[]
+
+  @@index([active])
+  @@map("model_versions")
+}
+
+// One row per recipe shown by /recommendations — which engine produced it and
+// at what rank. Joined against ratings/favorites created afterwards, this is
+// what lets the neural model be compared with the baseline on real behaviour.
+model RecommendationEvent {
+  id             String               @id @default(uuid())
+  userId         String
+  recipeId       String
+  engine         RecommendationEngine
+  modelVersionId String?
+  score          Float
+  position       Int
+  createdAt      DateTime             @default(now())
+
+  recipe       Recipe        @relation(fields: [recipeId], references: [id])
+  modelVersion ModelVersion? @relation(fields: [modelVersionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([recipeId])
+  @@map("recommendation_events")
+}
+
+enum RecommendationEngine {
+  BASELINE
+  NEURAL
 }
 
 enum Sex {

@@ -65,6 +65,18 @@ Other product details: **authentication** via Clerk, **EN/PT i18n** (both UI _an
 
 ---
 
+## 🧠 Neural recommender
+
+A small **two-tower network on TensorFlow.js** (`apps/api/src/ml`) ranks recipes by predicted rating; the flavor-tag recommender stays as the **baseline** and as the fallback.
+
+- **Inputs** — recipe: flavor tags + ingredients (multi-hot) + glass + alcoholic. User: score-weighted average of the recipes they rated + age/sex. Users are described by their history, not an id, so new users need no retraining.
+- **Training** — `GET /api/ml/train`, called daily by **Vercel Cron** (`apps/api/vercel.json`) and protected by `CRON_SECRET`. Pure-JS TF.js backend (the native `tfjs-node` binary doesn't fit a Vercel Function); early stopping on a 20% hold-out; a no-op below `ML_MIN_RATINGS` (default 50).
+- **Storage** — the Function filesystem is ephemeral, so each trained model (topology + weights, ~90 KB) is a row in `model_versions`. A new model only goes live if it beats the predict-the-mean baseline on held-out ratings.
+- **Serving** — `GET /api/recommendations` uses the active model when there is one (`?engine=baseline` forces the old one). Every recommendation shown is logged to `recommendation_events` with its engine, for baseline-vs-neural comparison.
+- **Local** — `npm run ml:train --workspace api` (add `-- --synthetic` to exercise the pipeline on generated users; saved inactive).
+
+---
+
 ## 🌐 Extra technical details
 
 - **EN/PT i18n** — custom provider (`useT` → `{ t, lang, setLang }`); language persisted in the database (`UserSettings.language`) and mirrored in `localStorage`. Translates **both UI and database content** (ingredient names, instructions, drink names, glass types).
@@ -104,7 +116,7 @@ npm run dev:web      # Next.js → http://localhost:3000
 | **Backend** | **Vercel** | Project `mxologist-api`, Root Directory = `apps/api`. The NestJS preset turns `src/main.ts` into a single Vercel Function — no `nest build` step is needed. `apps/api/vercel.json` runs `prisma generate` on every build and `prisma migrate deploy` **only when `VERCEL_ENV=production`**, so preview deploys never migrate the live database. |
 | **Database** | **Neon** | Managed Postgres. The pooled `DATABASE_URL` is used at runtime (required for serverless); `DIRECT_URL` is used for migrations. |
 
-**Environment variables on `mxologist-api`:** `DATABASE_URL`, `DIRECT_URL`, `CLERK_SECRET_KEY`, `WEB_APP_URL` (comma-separated CORS allowlist). `PORT` is injected by Vercel — do not set it.
+**Environment variables on `mxologist-api`:** `DATABASE_URL`, `DIRECT_URL`, `CLERK_SECRET_KEY`, `WEB_APP_URL` (comma-separated CORS allowlist), `CRON_SECRET` (protects the training cron). `PORT` is injected by Vercel — do not set it.
 
 **Environment variables on `mxologist-web`:** `NEXT_PUBLIC_API_URL` (points at `https://mxologist-api.vercel.app/api`, already including the `/api` global prefix), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`.
 
